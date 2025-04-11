@@ -48,9 +48,18 @@ def upload():
 
 @app.route('/files')
 def list_files():
-    files = os.listdir(UPLOAD_FOLDER)
-    links = [f'<li><a href="/download/{f}">{f}</a></li>' for f in files]
-    return f'<h2>파일 목록</h2><ul>{"".join(links)}</ul><a href="/">← 업로드</a>'
+    bucket = storage.bucket()
+    blobs = bucket.list_blobs(prefix="uploads/")  # Firebase의 uploads/ 폴더 목록 가져오기
+
+    links = []
+    for blob in blobs:
+        if blob.name.endswith("/"):  # 폴더 무시
+            continue
+        blob.make_public()
+        links.append(f'<li><a href="{blob.public_url}" target="_blank">{os.path.basename(blob.name)}</a></li>')
+
+    return f'<h2>Firebase 파일 목록</h2><ul>{"".join(links)}</ul><a href="/">← 업로드</a>'
+
 
 @app.route('/download/<filename>')
 def download(filename):
