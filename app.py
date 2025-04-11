@@ -1,3 +1,14 @@
+import firebase_admin
+from firebase_admin import credentials, storage
+
+# Firebase 인증 정보 JSON 파일 경로
+cred = credentials.Certificate("serviceAccountKey.json")
+
+# Firebase 초기화
+firebase_admin.initialize_app(cred, {
+    'storageBucket': 'sharefolder-f4ed6.appspot.com'
+})
+
 from flask import Flask, request, send_from_directory, redirect, url_for
 
 import os
@@ -21,8 +32,19 @@ def home():
 def upload():
     file = request.files['file']
     if file:
-        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(file_path)
+
+        # ✅ Firebase Storage에 업로드
+        bucket = storage.bucket()
+        blob = bucket.blob(f"uploads/{file.filename}")  # Firebase 경로
+        blob.upload_from_filename(file_path)
+        blob.make_public()  # 파일을 공개로 설정해서 누구나 접근 가능하게
+
+        print(f"✅ Firebase 업로드 완료! URL: {blob.public_url}")
+
     return redirect(url_for('home'))
+
 
 @app.route('/files')
 def list_files():
