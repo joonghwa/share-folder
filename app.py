@@ -1,13 +1,20 @@
+import json
 import firebase_admin
 from firebase_admin import credentials, storage
+import os
 
-# Firebase 인증 정보 JSON 파일 경로
-cred = credentials.Certificate("serviceAccountKey.json")
+firebase_json = os.environ.get('FIREBASE_KEY')  # 환경 변수에서 JSON 문자열 가져오기
+
+# 임시로 JSON 파일을 만들어줌
+with open("temp_key.json", "w") as f:
+    f.write(firebase_json)
 
 # Firebase 초기화
+cred = credentials.Certificate("temp_key.json")
 firebase_admin.initialize_app(cred, {
     'storageBucket': 'sharefolder-f4ed6.appspot.com'
 })
+
 
 from flask import Flask, request, send_from_directory, redirect, url_for
 
